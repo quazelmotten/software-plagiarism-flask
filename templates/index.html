@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Plagiarism Checker</title>
+    <style>
+        .file-input-container {
+            margin: 20px 0;
+        }
+        #checkBtn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #checkBtn:hover {
+            background-color: #0056b3;
+        }
+        .file-input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+        .side-by-side {
+            display: flex;
+            justify-content: space-between;
+        }
+        .code-container {
+            width: 45%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            height: 400px;
+            overflow-y: auto;
+        }
+        .line {
+            padding: 2px;
+        }
+        .diff-added {
+            background-color: #c8e6c9; /* Green for added lines */
+        }
+        .diff-deleted {
+            background-color: #ffcccb; /* Red for deleted lines */
+        }
+    </style>
+</head>
+<body>
+    <h1>Python Plagiarism Checker</h1>
+
+    <div class="file-input-container">
+        <label for="file1">Select the first .py file:</label>
+        <input type="file" id="file1" class="file-input" accept=".py">
+    </div>
+
+    <div class="file-input-container">
+        <label for="file2">Select the second .py file:</label>
+        <input type="file" id="file2" class="file-input" accept=".py">
+    </div>
+
+    <button id="checkBtn">Check Plagiarism</button>
+
+    <h2 id="result"></h2>
+
+    <div id="comparison-view" style="display:none;">
+        <h3>File Comparison</h3>
+        <div class="side-by-side">
+            <div class="code-container" id="file1-view">
+                <h4>File 1</h4>
+                <pre id="file1-code"></pre>
+            </div>
+            <div class="code-container" id="file2-view">
+                <h4>File 2</h4>
+                <pre id="file2-code"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput1 = document.getElementById('file1');
+        const fileInput2 = document.getElementById('file2');
+        const checkBtn = document.getElementById('checkBtn');
+        const result = document.getElementById('result');
+        const comparisonView = document.getElementById('comparison-view');
+        const file1View = document.getElementById('file1-code');
+        const file2View = document.getElementById('file2-code');
+
+        checkBtn.onclick = () => {
+            const file1 = fileInput1.files[0];
+            const file2 = fileInput2.files[0];
+
+            if (!file1 || !file2) {
+                result.textContent = 'Please select both files.';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file1', file1);
+            formData.append('file2', file2);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.plagiarism_percentage !== undefined) {
+                    result.textContent = `Plagiarism Percentage: ${data.plagiarism_percentage.toFixed(2)}%`;
+
+                    // Update the code comparison
+                    file1View.innerHTML = renderDiff(data.diff, 1);
+                    file2View.innerHTML = renderDiff(data.diff, 2);
+                    comparisonView.style.display = 'block';
+                } else {
+                    result.textContent = 'Error analyzing files';
+                }
+            })
+            .catch(err => {
+                result.textContent = 'Error occurred during upload';
+            });
+        };
+
+        // Render the diff
+        function renderDiff(diff, fileNumber) {
+            return diff.map(line => {
+                let className = '';
+                let content = '';
+
+                if (line.startsWith('-')) {
+                    className = 'diff-deleted';
+                    content = line.slice(2); // remove the '- ' prefix
+                } else if (line.startsWith('+')) {
+                    className = 'diff-added';
+                    content = line.slice(2); // remove the '+ ' prefix
+                } else {
+                    content = line.slice(2); // remove the '  ' prefix for unchanged lines
+                }
+
+                if ((fileNumber === 1 && line.startsWith('-')) || (fileNumber === 2 && line.startsWith('+'))) {
+                    // Skip lines that do not belong to the selected file
+                    return '';
+                }
+
+                return `<div class="line ${className}">${content}</div>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

@@ -2,148 +2,233 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Plagiarism Detector</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Plagiarism Checker</title>
     <style>
-        .file-input-container {
-            margin: 20px 0;
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f9f9f9;
+            --panel-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        #checkBtn {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+        }
+
+        .upload-form {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            margin-top: 20px;
+        }
+
+        .upload-form input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .upload-form button {
+            margin-top: 30px;
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
             border: none;
+            border-radius: 5px;
+            background-color: var(--accent-color);
+            color: white;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-        #checkBtn:hover {
-            background-color: #0056b3;
+
+        .upload-form button:hover {
+            background-color: #2980b9;
         }
-        .file-input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin: 10px 0;
+
+        .results {
+            margin-top: 40px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .side-by-side {
-            display: flex;
-            justify-content: space-between;
+
+        .results h2 {
+            margin-bottom: 15px;
         }
+
+        #plagiarism-percentage {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
         .code-container {
-            width: 45%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            height: 400px;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        .line {
-            padding: 2px;
+
+        @media (min-width: 768px) {
+            .code-container {
+                flex-direction: row;
+            }
         }
-        .diff-added {
-            background-color: #c8e6c9; /* Green for added lines */
+
+        .code-panel {
+            flex: 1;
+            background-color: #f4f4f4;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
-        .diff-deleted {
-            background-color: #ffcccb; /* Red for deleted lines */
+
+        .diff-highlight {
+            font-weight: bold;
+        }
+
+        .diff-highlight.green {
+            color: green;
+        }
+
+        .diff-highlight.red {
+            color: red;
+        }
+        #selectors {
+            margin: 20px auto 0;
+            display: flex; /* or block if you want */
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 10px 0;
+            width: fit-content; /* shrink width to content */
         }
     </style>
 </head>
 <body>
-    <h1>Python Plagiarism Checker</h1>
+    <h1>Plagiarism Detector</h1>
 
-    <div class="file-input-container">
-        <label for="file1">Select the first .py file:</label>
-        <input type="file" id="file1" class="file-input" accept=".py">
+    <form class="upload-form" id="upload-form" enctype="multipart/form-data">
+        <label for="files">Select Python Files:</label>
+        <input type="file" id="files" name="files" multiple required accept=".py">
+        <button type="submit">Upload Files</button>
+    </form>
+
+    <div class="selectors" id="selectors" style="display: none; margin-top: 20px;">
+        <label for="file1Select">Left File:</label>
+        <select id="file1Select"></select>
+
+        <label for="file2Select">Right File:</label>
+        <select id="file2Select"></select>
+
+        <button id="compareBtn">Compare</button>
     </div>
 
-    <div class="file-input-container">
-        <label for="file2">Select the second .py file:</label>
-        <input type="file" id="file2" class="file-input" accept=".py">
-    </div>
-
-    <button id="checkBtn">Check Plagiarism</button>
-
-    <h2 id="result"></h2>
-
-    <div id="comparison-view" style="display:none;">
-        <h3>File Comparison</h3>
-        <div class="side-by-side">
-            <div class="code-container" id="file1-view">
-                <h4>File 1</h4>
-                <pre id="file1-code"></pre>
-            </div>
-            <div class="code-container" id="file2-view">
-                <h4>File 2</h4>
-                <pre id="file2-code"></pre>
-            </div>
+    <div class="results" id="results" style="display:none;">
+        <h2>Comparison Results</h2>
+        <p id="plagiarism-percentage"></p>
+        <div class="code-container">
+            <div class="code-panel" id="file1-code"></div>
+            <div class="code-panel" id="file2-code"></div>
         </div>
     </div>
 
+    </div>
+
     <script>
-        const fileInput1 = document.getElementById('file1');
-        const fileInput2 = document.getElementById('file2');
-        const checkBtn = document.getElementById('checkBtn');
-        const result = document.getElementById('result');
-        const comparisonView = document.getElementById('comparison-view');
-        const file1View = document.getElementById('file1-code');
-        const file2View = document.getElementById('file2-code');
+    document.getElementById('upload-form').addEventListener('submit', function(event) {
+        event.preventDefault();
 
-        checkBtn.onclick = () => {
-            const file1 = fileInput1.files[0];
-            const file2 = fileInput2.files[0];
+        const formData = new FormData();
+        const files = document.getElementById('files').files;
 
-            if (!file1 || !file2) {
-                result.textContent = 'Please select both files.';
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file1', file1);
-            formData.append('file2', file2);
-
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.plagiarism_percentage !== undefined) {
-                    result.textContent = `Plagiarism Percentage: ${data.plagiarism_percentage.toFixed(2)}%`;
-
-                    // Update the code comparison
-                    file1View.innerHTML = renderDiff(data.diff, 1);
-                    file2View.innerHTML = renderDiff(data.diff, 2);
-                    comparisonView.style.display = 'block';
-                } else {
-                    result.textContent = 'Error analyzing files';
-                }
-            })
-            .catch(err => {
-                result.textContent = 'Error occurred during upload';
-            });
-        };
-
-        // Render the diff
-        function renderDiff(diff, fileNumber) {
-            return diff.map(line => {
-                let className = '';
-                let content = '';
-
-                if (line.startsWith('-')) {
-                    className = 'diff-deleted';
-                    content = line.slice(2); // remove the '- ' prefix
-                } else if (line.startsWith('+')) {
-                    className = 'diff-added';
-                    content = line.slice(2); // remove the '+ ' prefix
-                } else {
-                    content = line.slice(2); // remove the '  ' prefix for unchanged lines
-                }
-
-                if ((fileNumber === 1 && line.startsWith('-')) || (fileNumber === 2 && line.startsWith('+'))) {
-                    // Skip lines that do not belong to the selected file
-                    return '';
-                }
-
-                return `<div class="line ${className}">${content}</div>`;
-            }).join('');
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
         }
+
+        fetch('/upload_files', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.files) {
+                const file1Select = document.getElementById('file1Select');
+                const file2Select = document.getElementById('file2Select');
+                file1Select.innerHTML = '';
+                file2Select.innerHTML = '';
+
+                data.files.forEach(filename => {
+                    const option1 = document.createElement('option');
+                    option1.value = filename;
+                    option1.text = filename;
+                    const option2 = option1.cloneNode(true);
+                    file1Select.appendChild(option1);
+                    file2Select.appendChild(option2);
+                });
+
+                document.getElementById('selectors').style.display = 'block';
+            }
+        });
+    });
+
+    document.getElementById('compareBtn').addEventListener('click', function() {
+        const file1 = document.getElementById('file1Select').value;
+        const file2 = document.getElementById('file2Select').value;
+
+        fetch(`/compare_files?file1=${encodeURIComponent(file1)}&file2=${encodeURIComponent(file2)}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('plagiarism-percentage').innerText =
+                    `Plagiarism Percentage: ${data.plagiarism_percentage.toFixed(2)}%`;
+
+                document.getElementById('file1-code').innerHTML = data.file1_contents;
+                document.getElementById('file2-code').innerHTML = data.file2_contents;
+            });
+    });
     </script>
+
 </body>
 </html>

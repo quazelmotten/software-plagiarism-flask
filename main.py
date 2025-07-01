@@ -19,19 +19,25 @@ def index():
 def upload_files():
     uploaded_files = request.files.getlist('files')
     saved_filenames = []
+    language = request.form.get('language', 'python')  # Default to Python
 
     for file in uploaded_files:
-        if file and file.filename.endswith('.py'):
+        if file:  # (Optional) adapt this to language
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filepath)
             saved_filenames.append(file.filename)
 
+    # Store language selection in a global dictionary or session
+    app.config['SELECTED_LANGUAGE'] = language
+
     return jsonify({'files': saved_filenames})
+
 
 @app.route('/compare_files')
 def compare_files():
     file1_name = request.args.get('file1')
     file2_name = request.args.get('file2')
+    language = request.args.get('language', 'python')  # <-- add this line
 
     if not file1_name or not file2_name:
         return jsonify({'error': 'Missing file names'}), 400
@@ -43,22 +49,25 @@ def compare_files():
         file1_contents = f1.read()
         file2_contents = f2.read()
 
-    similarity = plagiarism.analyze_plagiarism(path1, path2)
+    similarity = plagiarism.analyze_plagiarism(path1, path2, language=language)  # <-- use dynamic language
 
-    diff = list(difflib.ndiff(file1_contents.splitlines(keepends=True),
-                              file2_contents.splitlines(keepends=True)))
+
     diff_output_file1 = []
     diff_output_file2 = []
-    for line in diff:
+
+    for line in difflib.ndiff(file1_contents.splitlines(), file2_contents.splitlines()):
         if line.startswith('+ '):
-            diff_output_file2.append(f'<span class="diff-highlight green">{line[2:]}</span>')
-            diff_output_file1.append('<span class="diff-highlight">          </span>')
+            content = line[2:].replace(" ", "&nbsp;").replace("<", "&lt;").replace(">", "&gt;")
+            diff_output_file1.append('<div class="code-line placeholder">&nbsp;</div>')
+            diff_output_file2.append(f'<div class="code-line green">{content}</div>')
         elif line.startswith('- '):
-            diff_output_file1.append(f'<span class="diff-highlight red">{line[2:]}</span>')
-            diff_output_file2.append('<span class="diff-highlight">          </span>')
+            content = line[2:].replace(" ", "&nbsp;").replace("<", "&lt;").replace(">", "&gt;")
+            diff_output_file1.append(f'<div class="code-line red">{content}</div>')
+            diff_output_file2.append('<div class="code-line placeholder">&nbsp;</div>')
         else:
-            diff_output_file1.append(line[2:])
-            diff_output_file2.append(line[2:])
+            content = line[2:].replace(" ", "&nbsp;").replace("<", "&lt;").replace(">", "&gt;")
+            diff_output_file1.append(f'<div class="code-line">{content}</div>')
+            diff_output_file2.append(f'<div class="code-line">{content}</div>')
 
     return jsonify({
         "plagiarism_percentage": similarity * 100,

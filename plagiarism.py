@@ -1,12 +1,26 @@
 from tree_sitter import Language, Parser
 import tree_sitter_python as tspython
+import tree_sitter_cpp as tscpp
+# import tree_sitter_javascript as tsjavascript  # if supported
+
 import hashlib
 from collections import defaultdict
 
-PY_LANGUAGE = Language(tspython.language())
+# Language map
+LANGUAGE_MAP = {
+    'python': Language(tspython.language()),
+    'cpp' : Language(tscpp.language())
+}
 
-def tokenize_with_tree_sitter(file_path):
-    parser = Parser(PY_LANGUAGE)
+def get_language(lang_code):
+    if lang_code not in LANGUAGE_MAP:
+        raise ValueError(f"Unsupported language: {lang_code}")
+    return LANGUAGE_MAP[lang_code]
+
+def tokenize_with_tree_sitter(file_path, lang_code='python'):
+    language = get_language(lang_code)
+    parser = Parser(language)
+    
 
     with open(file_path, 'r', encoding='utf-8') as f:
         code = f.read()
@@ -15,12 +29,11 @@ def tokenize_with_tree_sitter(file_path):
     tokens = []
 
     def extract_tokens(node):
-        # Recursively extract tokens from the AST
         if len(node.children) > 0:
             for child in node.children:
                 extract_tokens(child)
         else:
-            tokens.append(node.type)  # Capture the type of the token (e.g., keyword, identifier)
+            tokens.append(node.type)
 
     extract_tokens(tree.root_node)
     return tokens
@@ -68,31 +81,21 @@ def compute_similarity(index_a, index_b):
     return similarity
 
 # Helper function to analyze plagiarism between two files
-def analyze_plagiarism(file1, file2):
-    # Tokenize and generate fingerprints for both files
-    tokens1 = tokenize_with_tree_sitter(file1)
-    tokens2 = tokenize_with_tree_sitter(file2)
-    print('got tokens')
-    
+def analyze_plagiarism(file1, file2, language='python'):
+    tokens1 = tokenize_with_tree_sitter(file1, language)
+    tokens2 = tokenize_with_tree_sitter(file2, language)
+
     k_grams1 = generate_k_grams(tokens1)
     k_grams2 = generate_k_grams(tokens2)
-    print('got kgrams')
-    
+
     fingerprints1 = compute_fingerprints(k_grams1)
     fingerprints2 = compute_fingerprints(k_grams2)
-    print('got fingerprints')
-    
-    # Apply Moss Winnowing
+
     winnowed_fingerprints1 = winnow_fingerprints(fingerprints1)
     winnowed_fingerprints2 = winnow_fingerprints(fingerprints2)
-    print('got winnowed')
-    
-    # Index the fingerprints
-    index1 = index_fingerprints(winnowed_fingerprints1, 1)  # Assuming file1 is file 1
-    index2 = index_fingerprints(winnowed_fingerprints2, 2)  # Assuming file2 is file 2
-    print('got indexes')
-    
-    # Calculate the similarity between the two files
+
+    index1 = index_fingerprints(winnowed_fingerprints1, 1)
+    index2 = index_fingerprints(winnowed_fingerprints2, 2)
+
     similarity = compute_similarity(index1, index2)
-    print(similarity)
     return similarity

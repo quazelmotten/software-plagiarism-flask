@@ -134,6 +134,10 @@
         .diff-highlight.red {
             color: red;
         }
+        .diff-highlight.placeholder-line {
+            display: inline-block;
+            color: transparent;
+        }
         #selectors {
             margin: 20px auto 0;
             display: flex; /* or block if you want */
@@ -144,6 +148,28 @@
             padding: 10px 0;
             width: fit-content; /* shrink width to content */
         }
+
+        .code-line {
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.4em;
+            min-height: 1.4em;
+        }
+
+        .code-line.red {
+            color: red;
+            font-weight: bold;
+        }
+
+        .code-line.green {
+            color: green;
+            font-weight: bold;
+        }
+
+        .code-line.placeholder {
+            color: transparent; /* invisible but takes up space */
+        }
+
     </style>
 </head>
 <body>
@@ -165,59 +191,71 @@
         <button id="compareBtn">Compare</button>
     </div>
 
+    <div id="language-selector" style="text-align: center; margin-top: 20px;">
+    <label for="languageSelect">Language:</label>
+    <select id="languageSelect">
+        <option value="python" selected>Python</option>
+        <option value="cpp" selected>C++</option>
+            <!-- Add more languages if you support them -->
+        </select>
+    </div>
+
+
     <div class="results" id="results" style="display:none;">
         <h2>Comparison Results</h2>
         <p id="plagiarism-percentage"></p>
         <div class="code-container">
             <div class="code-panel" id="file1-code"></div>
             <div class="code-panel" id="file2-code"></div>
+
         </div>
     </div>
 
     </div>
 
     <script>
-    document.getElementById('upload-form').addEventListener('submit', function(event) {
-        event.preventDefault();
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
 
-        const formData = new FormData();
-        const files = document.getElementById('files').files;
+            const formData = new FormData();
+            const files = document.getElementById('files').files;
 
-        for (let i = 0; i < files.length; i++) {
-            formData.append('files', files[i]);
-        }
-
-        fetch('/upload_files', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.files) {
-                const file1Select = document.getElementById('file1Select');
-                const file2Select = document.getElementById('file2Select');
-                file1Select.innerHTML = '';
-                file2Select.innerHTML = '';
-
-                data.files.forEach(filename => {
-                    const option1 = document.createElement('option');
-                    option1.value = filename;
-                    option1.text = filename;
-                    const option2 = option1.cloneNode(true);
-                    file1Select.appendChild(option1);
-                    file2Select.appendChild(option2);
-                });
-
-                document.getElementById('selectors').style.display = 'block';
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
             }
-        });
-    });
 
-    document.getElementById('compareBtn').addEventListener('click', function() {
+            fetch('/upload_files', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.files) {
+                    const file1Select = document.getElementById('file1Select');
+                    const file2Select = document.getElementById('file2Select');
+                    file1Select.innerHTML = '';
+                    file2Select.innerHTML = '';
+
+                    data.files.forEach(filename => {
+                        const option1 = document.createElement('option');
+                        option1.value = filename;
+                        option1.text = filename;
+                        const option2 = option1.cloneNode(true);
+                        file1Select.appendChild(option1);
+                        file2Select.appendChild(option2);
+                    });
+
+                    document.getElementById('selectors').style.display = 'block';
+                }
+            });
+        });
+
+        document.getElementById('compareBtn').addEventListener('click', function() {
         const file1 = document.getElementById('file1Select').value;
         const file2 = document.getElementById('file2Select').value;
+        const language = document.getElementById('languageSelect').value;
 
-        fetch(`/compare_files?file1=${encodeURIComponent(file1)}&file2=${encodeURIComponent(file2)}`)
+        fetch(`/compare_files?file1=${encodeURIComponent(file1)}&file2=${encodeURIComponent(file2)}&language=${encodeURIComponent(language)}`)
             .then(res => res.json())
             .then(data => {
                 document.getElementById('results').style.display = 'block';
@@ -228,6 +266,7 @@
                 document.getElementById('file2-code').innerHTML = data.file2_contents;
             });
     });
+
     </script>
 
 </body>

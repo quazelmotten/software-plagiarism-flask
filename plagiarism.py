@@ -1,15 +1,14 @@
+# plagiarism.py
 from tree_sitter import Language, Parser
 import tree_sitter_python as tspython
 import tree_sitter_cpp as tscpp
-# import tree_sitter_javascript as tsjavascript  # if supported
-
 import hashlib
 from collections import defaultdict
 
-# Language map
+# Map language code to Tree-sitter Language
 LANGUAGE_MAP = {
     'python': Language(tspython.language()),
-    'cpp' : Language(tscpp.language())
+    'cpp': Language(tscpp.language())
 }
 
 def get_language(lang_code):
@@ -18,9 +17,12 @@ def get_language(lang_code):
     return LANGUAGE_MAP[lang_code]
 
 def tokenize_with_tree_sitter(file_path, lang_code='python'):
+    """
+    Parse file with Tree-sitter and extract tokens along with their start/end points.
+    Returns a list of tuples: (token_type, start_point, end_point)
+    """
     language = get_language(lang_code)
     parser = Parser(language)
-    
 
     with open(file_path, 'r', encoding='utf-8') as f:
         code = f.read()
@@ -29,58 +31,91 @@ def tokenize_with_tree_sitter(file_path, lang_code='python'):
     tokens = []
 
     def extract_tokens(node):
-        if len(node.children) > 0:
+        if len(node.children) == 0:
+            tokens.append((node.type, node.start_point, node.end_point))
+        else:
             for child in node.children:
                 extract_tokens(child)
-        else:
-            tokens.append(node.type)
 
     extract_tokens(tree.root_node)
     return tokens
 
-# Generate k-grams from tokenized source code
-def generate_k_grams(tokens, k=3):
+def generate_k_grams(tokens, k=50):
+    """
+    Each k-gram will contain combined position info from its first and last token.
+    """
     k_grams = []
     for i in range(len(tokens) - k + 1):
-        k_grams.append(tuple(tokens[i:i+k]))  # Create k-grams (tuples of k tokens)
+        kgram_tokens = tokens[i:i + k]
+        token_types = tuple(tok[0] for tok in kgram_tokens)
+        start_point = kgram_tokens[0][1]
+        end_point = kgram_tokens[-1][2]
+        k_grams.append((token_types, start_point, end_point))
     return k_grams
 
-# Compute rolling hash for k-grams (using simple hash for illustration)
 def compute_fingerprints(k_grams):
+    """
+    Each fingerprint includes its hash and start/end position.
+    """
     fingerprints = []
-    for k_gram in k_grams:
-        fingerprint = hashlib.sha256(str(k_gram).encode('utf-8')).hexdigest()  # You can use any hash function
-        fingerprints.append(fingerprint)
+    for kgram_tokens, start_point, end_point in k_grams:
+        hash_val = hashlib.sha256(str(kgram_tokens).encode('utf-8')).hexdigest()
+        fingerprints.append({
+            'hash': hash_val,
+            'start': start_point,
+            'end': end_point
+        })
     return fingerprints
 
-# Apply the Moss Winnowing algorithm to reduce the fingerprints
 def winnow_fingerprints(fingerprints, window_size=5):
+    """
+    Winnow the fingerprints but preserve start/end locations.
+    """
     winnowed = []
     for i in range(len(fingerprints) - window_size + 1):
-        window = fingerprints[i:i+window_size]
-        min_fingerprint = min(window)  # Choose the smallest fingerprint in the window
-        if not winnowed or min_fingerprint != winnowed[-1]:  # Avoid duplicates
-            winnowed.append(min_fingerprint)
+        window = fingerprints[i:i + window_size]
+        min_fp = min(window, key=lambda x: x['hash'])
+        if not winnowed or min_fp['hash'] != winnowed[-1]['hash']:
+            winnowed.append(min_fp)
     return winnowed
 
-# Index fingerprints for fast comparison
 def index_fingerprints(fingerprints, file_id):
     index = defaultdict(list)
-    for position, fingerprint in enumerate(fingerprints):
-        index[fingerprint].append((file_id, position))  # Store file_id and position
+    for fp in fingerprints:
+        index[fp['hash']].append({
+            'file_id': file_id,
+            'start': fp['start'],
+            'end': fp['end']
+        })
     return index
 
-# Calculate similarity between two sets of indexed fingerprints
 def compute_similarity(index_a, index_b):
-    common_fingerprints = set(index_a.keys()) & set(index_b.keys())
-    Sa = sum(len(index_a[fingerprint]) for fingerprint in common_fingerprints)
-    Sb = sum(len(index_b[fingerprint]) for fingerprint in common_fingerprints)
-    Ta = sum(len(index_a[fingerprint]) for fingerprint in index_a)
-    Tb = sum(len(index_b[fingerprint]) for fingerprint in index_b)
-    similarity = (Sa + Sb) / (Ta + Tb) if (Ta + Tb) > 0 else 0
-    return similarity
+    """
+    Compute numeric similarity score.
+    """
+    common = set(index_a.keys()) & set(index_b.keys())
+    if not common:
+        return 0
+    Sa = sum(len(index_a[h]) for h in common)
+    Sb = sum(len(index_b[h]) for h in common)
+    Ta = sum(len(index_a[h]) for h in index_a)
+    Tb = sum(len(index_b[h]) for h in index_b)
+    return (Sa + Sb) / (Ta + Tb)
 
-# Helper function to analyze plagiarism between two files
+def find_matching_regions(index_a, index_b):
+    """
+    Return list of matching (start,end) line regions from both files.
+    """
+    matches = []
+    for hash_val in set(index_a.keys()) & set(index_b.keys()):
+        for loc_a in index_a[hash_val]:
+            for loc_b in index_b[hash_val]:
+                matches.append({
+                    'file1': (loc_a['start'][0], loc_a['end'][0]),
+                    'file2': (loc_b['start'][0], loc_b['end'][0])
+                })
+    return matches
+
 def analyze_plagiarism(file1, file2, language='python'):
     tokens1 = tokenize_with_tree_sitter(file1, language)
     tokens2 = tokenize_with_tree_sitter(file2, language)
@@ -91,11 +126,13 @@ def analyze_plagiarism(file1, file2, language='python'):
     fingerprints1 = compute_fingerprints(k_grams1)
     fingerprints2 = compute_fingerprints(k_grams2)
 
-    winnowed_fingerprints1 = winnow_fingerprints(fingerprints1)
-    winnowed_fingerprints2 = winnow_fingerprints(fingerprints2)
+    winnowed1 = winnow_fingerprints(fingerprints1)
+    winnowed2 = winnow_fingerprints(fingerprints2)
 
-    index1 = index_fingerprints(winnowed_fingerprints1, 1)
-    index2 = index_fingerprints(winnowed_fingerprints2, 2)
+    index1 = index_fingerprints(winnowed1, 1)
+    index2 = index_fingerprints(winnowed2, 2)
 
     similarity = compute_similarity(index1, index2)
-    return similarity
+    matches = find_matching_regions(index1, index2)
+
+    return similarity, matches

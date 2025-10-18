@@ -148,7 +148,9 @@
             padding: 10px 0;
             width: fit-content; /* shrink width to content */
         }
-
+        .code-line.highlight {
+            background-color: rgba(255, 200, 0, 0.3);
+        }
         .code-line {
             white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
@@ -169,6 +171,44 @@
         .code-line.placeholder {
             color: transparent; /* invisible but takes up space */
         }
+
+        .code-panel {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            margin: 0;
+            line-height: 1.4em;
+            overflow-y: auto;
+        }
+
+        .code-line {
+            display: block;
+            line-height: 1.4em;
+            padding: 0 8px;
+            margin: 0;
+            min-height: 1.4em;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            white-space: pre;
+        }
+
+        /* prevent <br> from introducing gaps */
+        .code-panel br {
+            display: none;
+        }
+
+        /* make sure both code panels scroll together visually */
+        .code-container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+
+        .code-panel {
+            width: 50%;
+            box-sizing: border-box;
+        }
+
 
     </style>
 </head>

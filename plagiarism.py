@@ -6,7 +6,7 @@ import hashlib
 import re
 from collections import defaultdict
 
-# Map language code to Tree-sitter Language
+# Мапа языков для tree-sitter
 LANGUAGE_MAP = {
     'python': Language(tspython.language()),
     'cpp': Language(tscpp.language())
@@ -19,8 +19,8 @@ def get_language(lang_code):
 
 def tokenize_with_tree_sitter(file_path, lang_code='python'):
     """
-    Parse file with Tree-sitter and extract tokens along with their start/end points.
-    Returns a list of tuples: (token_type, start_point, end_point)
+    Парсинг файла с помощью фреймворка tree-sitter, который также парсит начало и конец фрагмента (start_point, end_point)
+    Возвращает массив кортежей из (token_type, start_point, end_point)
     """
     language = get_language(lang_code)
     parser = Parser(language)
@@ -43,7 +43,7 @@ def tokenize_with_tree_sitter(file_path, lang_code='python'):
 
 def generate_k_grams(tokens, k=6):
     """
-    Each k-gram will contain combined position info from its first and last token.
+    Каждая к-грамма содержит информацию о начале и конце фрагмента
     """
     k_grams = []
     for i in range(len(tokens) - k + 1):
@@ -56,7 +56,7 @@ def generate_k_grams(tokens, k=6):
 
 def compute_fingerprints(k_grams):
     """
-    Each fingerprint includes its hash and start/end position.
+    Каждый отпечаток включает в себя хэш и начальную, конечную позицию в коде
     """
     fingerprints = []
     for kgram_tokens, start_point, end_point in k_grams:
@@ -70,7 +70,7 @@ def compute_fingerprints(k_grams):
 
 def winnow_fingerprints(fingerprints, window_size=5):
     """
-    Winnow the fingerprints but preserve start/end locations.
+    Сокращаем количество хэшей с помощью алгоритма Winnowing, при этом сохраняя начальные/конечные позиции
     """
     winnowed = []
     for i in range(len(fingerprints) - window_size + 1):
@@ -92,7 +92,8 @@ def index_fingerprints(fingerprints, file_id):
 
 def compute_similarity(index_a, index_b):
     """
-    Compute numeric similarity score.
+    Высчитываем процент заимствований по формуле (Sa+Sb)/(Ta+Tb), 
+    где S количество заимствований в файле из общего набора хэшей, Т - общее количество хэшей в файле
     """
     common = set(index_a.keys()) & set(index_b.keys())
     if not common:
@@ -105,7 +106,7 @@ def compute_similarity(index_a, index_b):
 
 def find_matching_regions(index_a, index_b):
     """
-    Return list of matching (start,end) line regions from both files.
+    Возвращает массив совпадающих линий кода из обоих файлов
     """
     matches = []
     for hash_val in set(index_a.keys()) & set(index_b.keys()):
@@ -119,13 +120,12 @@ def find_matching_regions(index_a, index_b):
 
 def merge_close_matches(matches, max_gap=1):
     """
-    Merge adjacent or nearly adjacent match regions independently
-    for each file to prevent mismatched color gaps.
+    Объединяем линии идущие подряд или подряд с разрывами между ними
+    для каждого файла, чтобы предотвратить разрывы в подсветке
     """
     if not matches:
         return []
 
-    # Sort by file1 first (for deterministic order)
     matches.sort(key=lambda m: m['file1'][0])
     merged = [matches[0]]
 
@@ -135,7 +135,6 @@ def merge_close_matches(matches, max_gap=1):
         close1 = m['file1'][0] - last['file1'][1] <= max_gap
         close2 = m['file2'][0] - last['file2'][1] <= max_gap
 
-        # merge if close in either file
         if close1 or close2:
             merged[-1] = {
                 'file1': (

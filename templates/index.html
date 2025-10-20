@@ -87,7 +87,6 @@
             cursor: pointer;
         }
 
-        /* Wider comparison results */
         .results {
             margin-top: 40px;
             background: var(--panel-bg);
@@ -95,8 +94,8 @@
             border-radius: 8px;
             padding: 30px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            width: 95%;          /* <-- increased width */
-            max-width: 1600px;   /* <-- allow very wide screens */
+            width: 95%;        
+            max-width: 1600px;   
             margin-left: auto;
             margin-right: auto;
         }
@@ -105,12 +104,12 @@
             display: flex;
             flex-direction: row;
             align-items: flex-start;
-            gap: 30px; /* more spacing */
+            gap: 30px; 
         }
 
         .code-panel {
             flex: 1;
-            background-color: #fafafa; /* uniform light background */
+            background-color: #fafafa; 
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 10px;
@@ -119,17 +118,17 @@
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.9rem;
             line-height: 1.4em;
-            white-space: pre; /* preserve indentation */
+            white-space: pre; 
         }
 
         .code-line {
-            display: inline-block;      /* inline so lines stack tightly */
-            width: 100%;                /* ensure each line takes full width */
+            display: inline-block;  
+            width: 100%;             
             margin: 0;
-            padding: 0;             /* small horizontal padding */
-            background-color: #fafafa;  /* match container background */
-            line-height: 1.2;         /* consistent line height */
-            min-height: 1.4em;          /* consistent empty line height */
+            padding: 0;           
+            background-color: #fafafa; 
+            line-height: 1.2;        
+            min-height: 1.4em;        
             vertical-align: top;
             box-sizing: border-box;
             border-radius: 0;
@@ -139,9 +138,9 @@
             border-radius: 3px;
             padding: 0;
             margin-bottom: 0;
-            line-height: 1.4em;    /* MATCH the code-line line-height */
-            height: 1.4em;         /* Force height to line-height for vertical fill */
-            vertical-align: top;   /* Align properly within the line */
+            line-height: 1.4em; 
+            height: 1.4em;        
+            vertical-align: top;
         }
 
         #plagiarism-percentage {
@@ -211,7 +210,7 @@
     </div>
 
     <script>
-        // Handle file upload and trigger pairwise comparisons
+        // Загрузка файла и сравнение по парам
         document.getElementById('upload-form').addEventListener('submit', function(event) {
             event.preventDefault();
 
@@ -267,7 +266,7 @@
             });
         });
 
-        // Sorting by similarity percentage
+        // Сортировка в таблице по проценту заимствований
         let ascending = true;
         document.getElementById('similarityHeader').addEventListener('click', () => {
             const tbody = document.getElementById('comparisonTableBody');
@@ -282,7 +281,7 @@
             rows.forEach(row => tbody.appendChild(row));
         });
 
-        // Show side-by-side code comparison when clicking "Compare"
+        // Логика кнопки Compare
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('compareRowBtn')) {
                 const file1 = e.target.dataset.file1;

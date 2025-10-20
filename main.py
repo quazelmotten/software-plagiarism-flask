@@ -5,7 +5,7 @@ import plagiarism
 
 app = Flask(__name__)
 
-# Ensure uploaded files are saved in a temporary directory
+# Папка для хранения файлов
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -22,12 +22,11 @@ def upload_files():
     language = request.form.get('language', 'python')  # Default to Python
 
     for file in uploaded_files:
-        if file:  # (Optional) adapt this to language
+        if file: 
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filepath)
             saved_filenames.append(file.filename)
 
-    # Store language selection in a global dictionary or session
     app.config['SELECTED_LANGUAGE'] = language
 
     return jsonify({'files': saved_filenames})
@@ -44,7 +43,7 @@ def compare_all():
     for i, f1 in enumerate(files):
         for j, f2 in enumerate(files):
             if i >= j:
-                continue  # avoid duplicates and self-comparison
+                continue  # Без дубликатов
             key = tuple(sorted([f1, f2]))
             if key in seen:
                 continue
@@ -92,18 +91,14 @@ def compare_files():
 
     similarity, matches = plagiarism.analyze_plagiarism(path1, path2, language=language)
 
-    # Build color palette algorithmically
+    # Алгоритмический подбор цвета подсветки
     def generate_color(i):
         """Generate nice visually distinct colors using HSV space."""
-        hue = (i * 0.6180339887) % 1.0  # golden ratio spacing
+        hue = (i * 0.6180339887) % 1.0  # Золотое сечение
         light = 0.65 + 0.2 * ((i % 2) - 0.5)
         sat = 0.6 + 0.3 * ((i % 3) / 3)
         r, g, b = colorsys.hsv_to_rgb(hue, sat, light)
         return f"rgba({int(r*255)}, {int(g*255)}, {int(b*255)}, 0.35)"
-
-    # Prepare structures to track line colors
-    line_colors_1 = {}
-    line_colors_2 = {}
 
     line_meta_1 = {}
     line_meta_2 = {}
@@ -118,8 +113,7 @@ def compare_files():
         for l in range(start2, end2 + 1):
             line_meta_2[l] = {'color': color, 'match_id': i}
 
-
-    # Render lines with color-coded highlights
+    # Рендерим линии кода с подсветкой по цветам
     def render_lines(lines, meta_map, file_side):
         html_lines = []
         for i, line in enumerate(lines):

@@ -32,6 +32,43 @@ def upload_files():
 
     return jsonify({'files': saved_filenames})
 
+@app.route('/compare_all')
+def compare_all():
+    language = app.config.get('SELECTED_LANGUAGE', 'python')
+    upload_dir = app.config['UPLOAD_FOLDER']
+    files = os.listdir(upload_dir)
+
+    results = []
+    seen = set()
+
+    for i, f1 in enumerate(files):
+        for j, f2 in enumerate(files):
+            if i >= j:
+                continue  # avoid duplicates and self-comparison
+            key = tuple(sorted([f1, f2]))
+            if key in seen:
+                continue
+            seen.add(key)
+
+            path1 = os.path.join(upload_dir, f1)
+            path2 = os.path.join(upload_dir, f2)
+            try:
+                similarity, _ = plagiarism.analyze_plagiarism(path1, path2, language)
+                results.append({
+                    "file1": f1,
+                    "file2": f2,
+                    "similarity": round(similarity * 100, 2)
+                })
+            except Exception as e:
+                results.append({
+                    "file1": f1,
+                    "file2": f2,
+                    "similarity": 0,
+                    "error": str(e)
+                })
+
+    return jsonify({"comparisons": results})
+
 
 @app.route('/compare_files')
 def compare_files():
@@ -83,34 +120,22 @@ def compare_files():
     def render_lines(lines, color_map):
         html_lines = []
         for i, line in enumerate(lines):
-            # Escape HTML
             safe = (
                 line.replace("&", "&amp;")
                     .replace("<", "&lt;")
                     .replace(">", "&gt;")
                     .replace(" ", "&nbsp;")
             )
-
-            # Split leading/trailing whitespace from the code
-            # (count leading & trailing spaces)
-            leading_spaces = len(line) - len(line.lstrip(" "))
-            trailing_spaces = len(line) - len(line.rstrip(" "))
-
-            # Create leading/trailing parts as &nbsp;
-            leading_html = "&nbsp;" * leading_spaces
-            trailing_html = "&nbsp;" * trailing_spaces
-            code_html = (
-                safe.replace("&nbsp;", "", leading_spaces)
-                    .rstrip("&nbsp;")
-            )
+            if not line.strip():
+                html_lines.append('<div class="code-line">&nbsp;</div>')
+                continue
 
             if i in color_map:
-                color_style = f"background-color:{color_map[i]};border-radius:2px;padding:0 2px;"
-                code_html = f'<span style="{color_style}">{code_html}</span>'
+                color = color_map[i]
+                # Colored span only wraps the text, no padding on div
+                safe = f'<span class="highlight" style="background-color:{color};">{safe}</span>'
 
-            html_lines.append(
-                f'<div class="code-line">{leading_html}{code_html}{trailing_html}</div>'
-            )
+            html_lines.append(f'<div class="code-line">{safe}</div>')
 
         return "\n".join(html_lines)
 

@@ -3,6 +3,7 @@ from tree_sitter import Language, Parser
 import tree_sitter_python as tspython
 import tree_sitter_cpp as tscpp
 import hashlib
+import re
 from collections import defaultdict
 
 # Map language code to Tree-sitter Language
@@ -40,7 +41,7 @@ def tokenize_with_tree_sitter(file_path, lang_code='python'):
     extract_tokens(tree.root_node)
     return tokens
 
-def generate_k_grams(tokens, k=50):
+def generate_k_grams(tokens, k=6):
     """
     Each k-gram will contain combined position info from its first and last token.
     """
@@ -116,6 +117,43 @@ def find_matching_regions(index_a, index_b):
                 })
     return matches
 
+def merge_close_matches(matches, max_gap=1):
+    """
+    Merge adjacent or nearly adjacent match regions independently
+    for each file to prevent mismatched color gaps.
+    """
+    if not matches:
+        return []
+
+    # Sort by file1 first (for deterministic order)
+    matches.sort(key=lambda m: m['file1'][0])
+    merged = [matches[0]]
+
+    for m in matches[1:]:
+        last = merged[-1]
+
+        close1 = m['file1'][0] - last['file1'][1] <= max_gap
+        close2 = m['file2'][0] - last['file2'][1] <= max_gap
+
+        # merge if close in either file
+        if close1 or close2:
+            merged[-1] = {
+                'file1': (
+                    min(last['file1'][0], m['file1'][0]),
+                    max(last['file1'][1], m['file1'][1])
+                ),
+                'file2': (
+                    min(last['file2'][0], m['file2'][0]),
+                    max(last['file2'][1], m['file2'][1])
+                )
+            }
+        else:
+            merged.append(m)
+
+    return merged
+
+
+
 def analyze_plagiarism(file1, file2, language='python'):
     tokens1 = tokenize_with_tree_sitter(file1, language)
     tokens2 = tokenize_with_tree_sitter(file2, language)
@@ -134,5 +172,6 @@ def analyze_plagiarism(file1, file2, language='python'):
 
     similarity = compute_similarity(index1, index2)
     matches = find_matching_regions(index1, index2)
+    #matches = merge_close_matches(matches, max_gap=1)
 
     return similarity, matches

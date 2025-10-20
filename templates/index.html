@@ -14,11 +14,7 @@
             --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: var(--font-family);
@@ -40,7 +36,7 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 30px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .upload-form label {
@@ -71,194 +67,153 @@
             transition: background-color 0.3s ease;
         }
 
-        .upload-form button:hover {
-            background-color: #2980b9;
+        .upload-form button:hover { background-color: #2980b9; }
+
+        table {
+            border-collapse: collapse;
+            width: 90%;
+            margin: 20px auto;
+            max-width: 1000px;
         }
 
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        /* Wider comparison results */
         .results {
             margin-top: 40px;
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 30px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            max-width: 1000px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            width: 95%;          /* <-- increased width */
+            max-width: 1600px;   /* <-- allow very wide screens */
             margin-left: auto;
             margin-right: auto;
         }
 
-        .results h2 {
-            margin-bottom: 15px;
-        }
-
-        #plagiarism-percentage {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--accent-color);
-            margin-bottom: 20px;
-        }
-
-        .code-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        @media (min-width: 768px) {
-            .code-container {
-                flex-direction: row;
-            }
-        }
-
-        .code-panel {
-            flex: 1;
-            background-color: #f4f4f4;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 20px;
-            overflow-x: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .diff-highlight {
-            font-weight: bold;
-        }
-
-        .diff-highlight.green {
-            color: green;
-        }
-
-        .diff-highlight.red {
-            color: red;
-        }
-        .diff-highlight.placeholder-line {
-            display: inline-block;
-            color: transparent;
-        }
-        #selectors {
-            margin: 20px auto 0;
-            display: flex; /* or block if you want */
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            padding: 10px 0;
-            width: fit-content; /* shrink width to content */
-        }
-        .code-line.highlight {
-            background-color: rgba(255, 200, 0, 0.3);
-        }
-        .code-line {
-            white-space: pre-wrap;
-            font-family: 'Courier New', Courier, monospace;
-            line-height: 1.4em;
-            min-height: 1.4em;
-        }
-
-        .code-line.red {
-            color: red;
-            font-weight: bold;
-        }
-
-        .code-line.green {
-            color: green;
-            font-weight: bold;
-        }
-
-        .code-line.placeholder {
-            color: transparent; /* invisible but takes up space */
-        }
-
-        .code-panel {
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            margin: 0;
-            line-height: 1.4em;
-            overflow-y: auto;
-        }
-
-        .code-line {
-            display: block;
-            line-height: 1.4em;
-            padding: 0 8px;
-            margin: 0;
-            min-height: 1.4em;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            white-space: pre;
-        }
-
-        /* prevent <br> from introducing gaps */
-        .code-panel br {
-            display: none;
-        }
-
-        /* make sure both code panels scroll together visually */
         .code-container {
             display: flex;
             flex-direction: row;
             align-items: flex-start;
+            gap: 30px; /* more spacing */
         }
 
         .code-panel {
-            width: 50%;
-            box-sizing: border-box;
+            flex: 1;
+            background-color: #fafafa; /* uniform light background */
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            overflow-x: auto;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.4em;
+            white-space: pre; /* preserve indentation */
         }
 
+        .code-line {
+            display: inline-block;      /* inline so lines stack tightly */
+            width: 100%;                /* ensure each line takes full width */
+            margin: 0;
+            padding: 0;             /* small horizontal padding */
+            background-color: #fafafa;  /* match container background */
+            line-height: 1.2;         /* consistent line height */
+            min-height: 1.4em;          /* consistent empty line height */
+            vertical-align: top;
+            box-sizing: border-box;
+            border-radius: 0;
+        }
+        .highlight {
+            display: inline-block;
+            border-radius: 3px;
+            padding: 0;
+            margin-bottom: 0;
+            line-height: 1.4em;    /* MATCH the code-line line-height */
+            height: 1.4em;         /* Force height to line-height for vertical fill */
+            vertical-align: top;   /* Align properly within the line */
+        }
 
+        #plagiarism-percentage {
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .code-container {
+                flex-direction: column;
+            }
+            .code-panel {
+                width: 100%;
+                height: auto;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Plagiarism Detector</h1>
 
+    <!-- Upload Form -->
     <form class="upload-form" id="upload-form" enctype="multipart/form-data">
-        <label for="files">Select Python Files:</label>
-        <input type="file" id="files" name="files" multiple required accept=".py">
-        <button type="submit">Upload Files</button>
+        <label for="files">Select Files:</label>
+        <input type="file" id="files" name="files" multiple required accept=".py,.cpp,.c">
+        
+        <label for="languageSelect">Language:</label>
+        <select id="languageSelect" name="language">
+            <option value="python" selected>Python</option>
+            <option value="cpp">C++</option>
+        </select>
+
+        <button type="submit">Upload & Compare</button>
     </form>
 
-    <div class="selectors" id="selectors" style="display: none; margin-top: 20px;">
-        <label for="file1Select">Left File:</label>
-        <select id="file1Select"></select>
-
-        <label for="file2Select">Right File:</label>
-        <select id="file2Select"></select>
-
-        <button id="compareBtn">Compare</button>
+    <!-- Comparison Table -->
+    <div id="comparison-table-section" style="display:none; margin-top:30px;">
+        <h3 style="text-align:center;">File Comparison Matrix</h3>
+        <table id="comparisonTable">
+            <thead>
+                <tr>
+                    <th>Left File</th>
+                    <th>Right File</th>
+                    <th id="similarityHeader">Similarity (%) ▲▼</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="comparisonTableBody"></tbody>
+        </table>
     </div>
 
-    <div id="language-selector" style="text-align: center; margin-top: 20px;">
-    <label for="languageSelect">Language:</label>
-    <select id="languageSelect">
-        <option value="python" selected>Python</option>
-        <option value="cpp" selected>C++</option>
-            <!-- Add more languages if you support them -->
-        </select>
-    </div>
-
-
+    <!-- Detailed Results -->
     <div class="results" id="results" style="display:none;">
-        <h2>Comparison Results</h2>
+        <h2 style="text-align:center;">Comparison Results</h2>
         <p id="plagiarism-percentage"></p>
         <div class="code-container">
             <div class="code-panel" id="file1-code"></div>
             <div class="code-panel" id="file2-code"></div>
-
         </div>
     </div>
 
-    </div>
-
     <script>
+        // Handle file upload and trigger pairwise comparisons
         document.getElementById('upload-form').addEventListener('submit', function(event) {
             event.preventDefault();
 
             const formData = new FormData();
             const files = document.getElementById('files').files;
+            const language = document.getElementById('languageSelect').value;
+            formData.append('language', language);
 
             for (let i = 0; i < files.length; i++) {
                 formData.append('files', files[i]);
@@ -269,45 +224,90 @@
                 body: formData
             })
             .then(res => res.json())
-            .then(data => {
-                if (data.files) {
-                    const file1Select = document.getElementById('file1Select');
-                    const file2Select = document.getElementById('file2Select');
-                    file1Select.innerHTML = '';
-                    file2Select.innerHTML = '';
+            .then(() => {
+                fetch('/compare_all')
+                    .then(res => res.json())
+                    .then(data => {
+                        const tbody = document.getElementById('comparisonTableBody');
+                        tbody.innerHTML = '';
 
-                    data.files.forEach(filename => {
-                        const option1 = document.createElement('option');
-                        option1.value = filename;
-                        option1.text = filename;
-                        const option2 = option1.cloneNode(true);
-                        file1Select.appendChild(option1);
-                        file2Select.appendChild(option2);
+                        data.comparisons.forEach(entry => {
+                            const row = document.createElement('tr');
+                            const color =
+                                entry.similarity > 70 ? '#f8d7da' :
+                                entry.similarity > 40 ? '#fff3cd' :
+                                '#d4edda';
+                            row.style.backgroundColor = color;
+
+                            row.innerHTML = `
+                                <td>${entry.file1}</td>
+                                <td>${entry.file2}</td>
+                                <td>${entry.similarity}%</td>
+                                <td>
+                                    <button class="compareRowBtn" data-file1="${entry.file1}" data-file2="${entry.file2}" style="
+                                        background-color:#3498db;
+                                        color:white;
+                                        border:none;
+                                        border-radius:5px;
+                                        padding:5px 10px;
+                                        cursor:pointer;
+                                    ">Compare</button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+
+                        document.getElementById('comparison-table-section').style.display = 'block';
                     });
-
-                    document.getElementById('selectors').style.display = 'block';
-                }
             });
         });
 
-        document.getElementById('compareBtn').addEventListener('click', function() {
-        const file1 = document.getElementById('file1Select').value;
-        const file2 = document.getElementById('file2Select').value;
-        const language = document.getElementById('languageSelect').value;
-
-        fetch(`/compare_files?file1=${encodeURIComponent(file1)}&file2=${encodeURIComponent(file2)}&language=${encodeURIComponent(language)}`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('results').style.display = 'block';
-                document.getElementById('plagiarism-percentage').innerText =
-                    `Plagiarism Percentage: ${data.plagiarism_percentage.toFixed(2)}%`;
-
-                document.getElementById('file1-code').innerHTML = data.file1_contents;
-                document.getElementById('file2-code').innerHTML = data.file2_contents;
+        // Sorting by similarity percentage
+        let ascending = true;
+        document.getElementById('similarityHeader').addEventListener('click', () => {
+            const tbody = document.getElementById('comparisonTableBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                const valA = parseFloat(a.cells[2].innerText);
+                const valB = parseFloat(b.cells[2].innerText);
+                return ascending ? valA - valB : valB - valA;
             });
-    });
+            ascending = !ascending;
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+        });
 
+        // Show side-by-side code comparison when clicking "Compare"
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('compareRowBtn')) {
+                const file1 = e.target.dataset.file1;
+                const file2 = e.target.dataset.file2;
+                const language = document.getElementById('languageSelect').value;
+
+                fetch(`/compare_files?file1=${encodeURIComponent(file1)}&file2=${encodeURIComponent(file2)}&language=${encodeURIComponent(language)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert(data.error);
+                            return;
+                        }
+
+                        const percentElem = document.getElementById('plagiarism-percentage');
+                        const percent = data.plagiarism_percentage;
+                        let color = '#2ecc71';
+                        if (percent > 70) color = '#e74c3c';
+                        else if (percent > 40) color = '#f1c40f';
+                        percentElem.style.color = color;
+                        percentElem.innerText = `Plagiarism Percentage: ${percent.toFixed(2)}%`;
+
+                        document.getElementById('results').style.display = 'block';
+                        document.getElementById('file1-code').innerHTML = data.file1_contents;
+                        document.getElementById('file2-code').innerHTML = data.file2_contents;
+
+                        window.scrollTo({ top: document.getElementById('results').offsetTop, behavior: 'smooth' });
+                    });
+            }
+        });
     </script>
-
 </body>
 </html>

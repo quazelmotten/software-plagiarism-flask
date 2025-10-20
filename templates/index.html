@@ -150,6 +150,11 @@
             text-align: center;
             margin-bottom: 20px;
         }
+        .highlight.hover-linked {
+            outline: 2px solid #000;
+            background-color: rgba(255, 255, 0, 0.5) !important;
+        }
+
 
         @media (max-width: 900px) {
             .code-container {
@@ -306,6 +311,30 @@
 
                         window.scrollTo({ top: document.getElementById('results').offsetTop, behavior: 'smooth' });
                     });
+            }
+        });
+        document.addEventListener('mouseover', function(e) {
+            const target = e.target.closest('.highlight');
+            if (target && target.dataset.match) {
+                const matchId = target.dataset.match;
+                document
+                    .querySelectorAll(`.highlight[data-match="${matchId}"]`)
+                    .forEach(el => el.classList.add('hover-linked'));
+            }
+            const otherSide = target.dataset.side === 'file1' ? 'file2' : 'file1';
+            const otherEl = document.querySelector(`.highlight[data-match="${matchId}"][data-side="${otherSide}"]`);
+            if (otherEl) {
+                otherEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const target = e.target.closest('.highlight');
+            if (target && target.dataset.match) {
+                const matchId = target.dataset.match;
+                document
+                    .querySelectorAll(`.highlight[data-match="${matchId}"]`)
+                    .forEach(el => el.classList.remove('hover-linked'));
             }
         });
     </script>

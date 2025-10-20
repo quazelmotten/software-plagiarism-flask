@@ -105,19 +105,22 @@ def compare_files():
     line_colors_1 = {}
     line_colors_2 = {}
 
+    line_meta_1 = {}
+    line_meta_2 = {}
+
     for i, match in enumerate(matches):
         color = generate_color(i)
-
         start1, end1 = match['file1']
         start2, end2 = match['file2']
 
         for l in range(start1, end1 + 1):
-            line_colors_1.setdefault(l, color)
+            line_meta_1[l] = {'color': color, 'match_id': i}
         for l in range(start2, end2 + 1):
-            line_colors_2.setdefault(l, color)
+            line_meta_2[l] = {'color': color, 'match_id': i}
+
 
     # Render lines with color-coded highlights
-    def render_lines(lines, color_map):
+    def render_lines(lines, meta_map, file_side):
         html_lines = []
         for i, line in enumerate(lines):
             safe = (
@@ -126,22 +129,28 @@ def compare_files():
                     .replace(">", "&gt;")
                     .replace(" ", "&nbsp;")
             )
+
             if not line.strip():
                 html_lines.append('<div class="code-line">&nbsp;</div>')
                 continue
 
-            if i in color_map:
-                color = color_map[i]
-                # Colored span only wraps the text, no padding on div
-                safe = f'<span class="highlight" style="background-color:{color};">{safe}</span>'
+            if i in meta_map:
+                color = meta_map[i]['color']
+                match_id = meta_map[i]['match_id']
+                safe = (
+                    f'<span class="highlight match-{match_id}" '
+                    f'data-match="{match_id}" '
+                    f'data-side="{file_side}" '
+                    f'style="background-color:{color};">'
+                    f'{safe}</span>'
+                )
 
             html_lines.append(f'<div class="code-line">{safe}</div>')
-
         return "\n".join(html_lines)
 
+    html1 = render_lines(file1_lines, line_meta_1, "file1")
+    html2 = render_lines(file2_lines, line_meta_2, "file2")
 
-    html1 = render_lines(file1_lines, line_colors_1)
-    html2 = render_lines(file2_lines, line_colors_2)
 
     return jsonify({
         "plagiarism_percentage": similarity * 100,

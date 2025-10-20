@@ -88,7 +88,7 @@
         }
 
         .results {
-            margin-top: 40px;
+            margin-top: 0;
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -154,6 +154,58 @@
             background-color: rgba(255, 255, 0, 0.5) !important;
         }
 
+        .comparison-layout {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 30px;
+            width: 95%;
+            max-width: 1800px;
+            margin: 40px auto;
+        }
+
+        .table-section {
+            flex: 1;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+            /* Allow only vertical scrolling */
+            overflow-y: auto;
+            overflow-x: hidden;
+
+            /* Always reserve space for scrollbar */
+            scrollbar-gutter: stable;
+
+            /* Make sure content doesn’t hide behind scrollbar */
+            padding-right: 64px;
+
+            max-height: 90vh;
+        }
+
+        .results {
+            flex: 2.5;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        @media (max-width: 1000px) {
+            .comparison-layout {
+                flex-direction: column;
+            }
+            .table-section, .results {
+                width: 100%;
+                max-height: none;
+            }
+        }
+
 
         @media (max-width: 900px) {
             .code-container {
@@ -183,31 +235,35 @@
         <button type="submit">Upload & Compare</button>
     </form>
 
-    <!-- Comparison Table -->
-    <div id="comparison-table-section" style="display:none; margin-top:30px;">
-        <h3 style="text-align:center;">File Comparison Matrix</h3>
-        <table id="comparisonTable">
-            <thead>
-                <tr>
-                    <th>Left File</th>
-                    <th>Right File</th>
-                    <th id="similarityHeader">Similarity (%) ▲▼</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="comparisonTableBody"></tbody>
-        </table>
-    </div>
+    <!-- Comparison + Results Layout -->
+    <div class="comparison-layout" id="comparison-layout" style="display:none;">
+        <!-- Table Section -->
+        <div id="comparison-table-section" class="table-section">
+            <h3>File Comparison Matrix</h3>
+            <table id="comparisonTable">
+                <thead>
+                    <tr>
+                        <th>Left File</th>
+                        <th>Right File</th>
+                        <th id="similarityHeader">Similarity (%) ▲▼</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonTableBody"></tbody>
+            </table>
+        </div>
 
-    <!-- Detailed Results -->
-    <div class="results" id="results" style="display:none;">
-        <h2 style="text-align:center;">Comparison Results</h2>
-        <p id="plagiarism-percentage"></p>
-        <div class="code-container">
-            <div class="code-panel" id="file1-code"></div>
-            <div class="code-panel" id="file2-code"></div>
+        <!-- Detailed Results Section -->
+        <div class="results" id="results">
+            <h2 style="text-align:center;">Comparison Results</h2>
+            <p id="plagiarism-percentage"></p>
+            <div class="code-container">
+                <div class="code-panel" id="file1-code"></div>
+                <div class="code-panel" id="file2-code"></div>
+            </div>
         </div>
     </div>
+
 
     <script>
         // Загрузка файла и сравнение по парам
@@ -261,7 +317,7 @@
                             tbody.appendChild(row);
                         });
 
-                        document.getElementById('comparison-table-section').style.display = 'block';
+                        document.getElementById('comparison-layout').style.display = 'flex';
                     });
             });
         });
@@ -304,14 +360,16 @@
                         percentElem.style.color = color;
                         percentElem.innerText = `Plagiarism Percentage: ${percent.toFixed(2)}%`;
 
-                        document.getElementById('results').style.display = 'block';
+                        // Update right-side comparison panels
                         document.getElementById('file1-code').innerHTML = data.file1_contents;
                         document.getElementById('file2-code').innerHTML = data.file2_contents;
 
-                        window.scrollTo({ top: document.getElementById('results').offsetTop, behavior: 'smooth' });
+                        // Ensure layout is visible
+                        document.getElementById('comparison-layout').style.display = 'flex';
                     });
             }
         });
+
         document.addEventListener('mouseover', function(e) {
             const target = e.target.closest('.highlight');
             if (target && target.dataset.match) {

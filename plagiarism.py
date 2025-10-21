@@ -2,8 +2,6 @@
 from tree_sitter import Language, Parser
 import tree_sitter_python as tspython
 import tree_sitter_cpp as tscpp
-import hashlib
-import re
 from collections import defaultdict
 
 # Мапа языков для tree-sitter
@@ -54,19 +52,37 @@ def generate_k_grams(tokens, k=6):
         k_grams.append((token_types, start_point, end_point))
     return k_grams
 
-def compute_fingerprints(k_grams):
+def compute_fingerprints(tokens, k=6, base=257, mod=10**9 + 7):
     """
-    Каждый отпечаток включает в себя хэш и начальную, конечную позицию в коде
+    Высчитываем скользящие хэши для всех токенов (быстрее чем SHA256)
     """
-    fingerprints = []
-    for kgram_tokens, start_point, end_point in k_grams:
-        hash_val = hashlib.sha256(str(kgram_tokens).encode('utf-8')).hexdigest()
-        fingerprints.append({
-            'hash': hash_val,
-            'start': start_point,
-            'end': end_point
+    if len(tokens) < k:
+        return []
+
+    hashes = []
+    power = pow(base, k-1, mod)
+    h = 0
+
+    for i in range(k):
+        h = (h * base + hash(tokens[i][0])) % mod
+
+    hashes.append({
+        'hash': h,
+        'start': tokens[0][1],
+        'end': tokens[k-1][2]
+    })
+
+    for i in range(k, len(tokens)):
+        h = (h - hash(tokens[i - k][0]) * power) % mod
+        h = (h * base + hash(tokens[i][0])) % mod
+        hashes.append({
+            'hash': h,
+            'start': tokens[i - k + 1][1],
+            'end': tokens[i][2]
         })
-    return fingerprints
+
+    return hashes
+
 
 def winnow_fingerprints(fingerprints, window_size=5):
     """
@@ -118,40 +134,46 @@ def find_matching_regions(index_a, index_b):
                 })
     return matches
 
-def merge_close_matches(matches, max_gap=1):
+def merge_close_matches(matches, max_gap=1, max_span=20):
     """
-    Объединяем линии идущие подряд или подряд с разрывами между ними
-    для каждого файла, чтобы предотвратить разрывы в подсветке
+    Не особо работает
     """
     if not matches:
         return []
 
-    matches.sort(key=lambda m: m['file1'][0])
+    # Sort by file1 start line for consistency
+    matches = sorted(matches, key=lambda m: m['file1'][0])
     merged = [matches[0]]
 
     for m in matches[1:]:
         last = merged[-1]
 
-        close1 = m['file1'][0] - last['file1'][1] <= max_gap
-        close2 = m['file2'][0] - last['file2'][1] <= max_gap
+        # Gaps between this match and previous one in both files
+        gap1 = m['file1'][0] - last['file1'][1]
+        gap2 = m['file2'][0] - last['file2'][1]
 
-        if close1 or close2:
-            merged[-1] = {
-                'file1': (
-                    min(last['file1'][0], m['file1'][0]),
-                    max(last['file1'][1], m['file1'][1])
-                ),
-                'file2': (
-                    min(last['file2'][0], m['file2'][0]),
-                    max(last['file2'][1], m['file2'][1])
-                )
-            }
+        # Check closeness in both files (not just one)
+        if gap1 <= max_gap and gap2 <= max_gap:
+            new_file1 = (
+                min(last['file1'][0], m['file1'][0]),
+                max(last['file1'][1], m['file1'][1])
+            )
+            new_file2 = (
+                min(last['file2'][0], m['file2'][0]),
+                max(last['file2'][1], m['file2'][1])
+            )
+
+            # Prevent absurdly large merges
+            span1 = new_file1[1] - new_file1[0]
+            span2 = new_file2[1] - new_file2[0]
+            if span1 <= max_span and span2 <= max_span:
+                merged[-1] = {'file1': new_file1, 'file2': new_file2}
+            else:
+                merged.append(m)
         else:
             merged.append(m)
 
     return merged
-
-
 
 def analyze_plagiarism(file1, file2, language='python'):
     tokens1 = tokenize_with_tree_sitter(file1, language)

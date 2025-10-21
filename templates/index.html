@@ -5,6 +5,9 @@
     <title>Plagiarism Detector</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        /* ===========================
+           GLOBAL VARIABLES & RESETS
+        ============================ */
         :root {
             --primary-color: #2c3e50;
             --accent-color: #3498db;
@@ -12,9 +15,16 @@
             --panel-bg: #ffffff;
             --border-color: #e0e0e0;
             --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --warning-color: #f1c40f;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: var(--font-family);
@@ -29,24 +39,27 @@
             font-size: 2.2rem;
         }
 
+        /* ===========================
+           FORM STYLING
+        ============================ */
         .upload-form {
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             max-width: 600px;
-            margin: 0 auto;
+            margin: 0 auto 40px;
             padding: 30px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .upload-form label {
             display: block;
-            margin-bottom: 8px;
+            margin: 20px 0 8px;
             font-weight: 500;
-            margin-top: 20px;
         }
 
-        .upload-form input[type="file"] {
+        .upload-form input[type="file"],
+        .upload-form select {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border-color);
@@ -67,17 +80,58 @@
             transition: background-color 0.3s ease;
         }
 
-        .upload-form button:hover { background-color: #2980b9; }
+        .upload-form button:hover {
+            background-color: #2980b9;
+        }
 
+        /* ===========================
+           LAYOUT
+        ============================ */
+        .comparison-layout {
+            display: none;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 30px;
+            width: 95%;
+            max-width: 1800px;
+            margin: 40px auto;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 24px;
+        }
+
+        .table-section {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: 90vh;
+            scrollbar-gutter: stable;
+            padding-right: 64px;
+        }
+
+        .results {
+            flex: 2.5;
+            overflow: auto;
+            max-height: 90vh;
+            text-align: center;
+        }
+
+        /* ===========================
+           TABLE STYLING
+        ============================ */
         table {
             border-collapse: collapse;
-            width: 90%;
-            margin: 20px auto;
-            max-width: 1000px;
+            width: 100%;
+            margin-top: 12px;
         }
 
         th, td {
-            border: 1px solid #ccc;
+            border: 1px solid var(--border-color);
             padding: 8px;
             text-align: center;
         }
@@ -87,115 +141,80 @@
             cursor: pointer;
         }
 
-        .results {
-            margin-top: 0;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            width: 95%;        
-            max-width: 1600px;   
-            margin-left: auto;
-            margin-right: auto;
+        .compare-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .compare-btn:hover {
+            background-color: #2980b9;
         }
 
         .code-container {
             display: flex;
-            flex-direction: row;
+            gap: 30px;
             align-items: flex-start;
-            gap: 30px; 
         }
 
         .code-panel {
             flex: 1;
-            background-color: #fafafa; 
+            background-color: #fafafa;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 10px;
-            overflow-x: auto;
-            overflow-y: auto;
+            overflow: auto;
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.9rem;
             line-height: 1.4em;
-            white-space: pre; 
+            white-space: pre; /* Keeps code spacing intact */
+            text-align: left;
         }
 
         .code-line {
-            display: inline-block;  
-            width: 100%;             
+            display: inline-block;  /* Prevents line breaks */
+            width: 100%;
             margin: 0;
-            padding: 0;           
-            background-color: #fafafa; 
-            line-height: 1.2;        
-            min-height: 1.4em;        
+            padding: 0;
+            line-height: 1.2;
+            min-height: 1.4em;
             vertical-align: top;
-            box-sizing: border-box;
-            border-radius: 0;
+            white-space: pre;       /* Preserve indentation */
         }
+
         .highlight {
             display: inline-block;
             border-radius: 3px;
             padding: 0;
             margin-bottom: 0;
-            line-height: 1.4em; 
-            height: 1.4em;        
+            line-height: 1.4em;
             vertical-align: top;
         }
 
-        #plagiarism-percentage {
-            font-size: 1.4rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 20px;
-        }
         .highlight.hover-linked {
             outline: 2px solid #000;
             background-color: rgba(255, 255, 0, 0.5) !important;
         }
 
-        .comparison-layout {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 30px;
-            width: 95%;
-            max-width: 1800px;
-            margin: 40px auto;
+
+        .highlight.hover-linked {
+            outline: 2px solid #000;
+            background-color: rgba(255, 255, 0, 0.5) !important;
         }
 
-        .table-section {
-            flex: 1;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-
-            /* Allow only vertical scrolling */
-            overflow-y: auto;
-            overflow-x: hidden;
-
-            /* Always reserve space for scrollbar */
-            scrollbar-gutter: stable;
-
-            /* Make sure content doesn’t hide behind scrollbar */
-            padding-right: 64px;
-
-            max-height: 90vh;
+        #plagiarism-percentage {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
         }
 
-        .results {
-            flex: 2.5;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            max-height: 90vh;
-            overflow: auto;
-        }
-
+        /* ===========================
+           RESPONSIVE DESIGN
+        ============================ */
         @media (max-width: 1000px) {
             .comparison-layout {
                 flex-direction: column;
@@ -206,14 +225,9 @@
             }
         }
 
-
         @media (max-width: 900px) {
             .code-container {
                 flex-direction: column;
-            }
-            .code-panel {
-                width: 100%;
-                height: auto;
             }
         }
     </style>
@@ -225,7 +239,7 @@
     <form class="upload-form" id="upload-form" enctype="multipart/form-data">
         <label for="files">Select Files:</label>
         <input type="file" id="files" name="files" multiple required accept=".py,.cpp,.c">
-        
+
         <label for="languageSelect">Language:</label>
         <select id="languageSelect" name="language">
             <option value="python" selected>Python</option>
@@ -235,10 +249,10 @@
         <button type="submit">Upload & Compare</button>
     </form>
 
-    <!-- Comparison + Results Layout -->
-    <div class="comparison-layout" id="comparison-layout" style="display:none;">
-        <!-- Table Section -->
-        <div id="comparison-table-section" class="table-section">
+    <!-- Comparison + Results -->
+    <div class="comparison-layout" id="comparison-layout">
+        <!-- File Comparison Table -->
+        <section class="panel table-section" id="comparison-table-section">
             <h3>File Comparison Matrix</h3>
             <table id="comparisonTable">
                 <thead>
@@ -251,149 +265,121 @@
                 </thead>
                 <tbody id="comparisonTableBody"></tbody>
             </table>
-        </div>
+        </section>
 
-        <!-- Detailed Results Section -->
-        <div class="results" id="results">
-            <h2 style="text-align:center;">Comparison Results</h2>
+        <!-- Detailed Results -->
+        <section class="panel results" id="results">
+            <h2>Comparison Results</h2>
             <p id="plagiarism-percentage"></p>
             <div class="code-container">
                 <div class="code-panel" id="file1-code"></div>
                 <div class="code-panel" id="file2-code"></div>
             </div>
-        </div>
+        </section>
     </div>
 
-
     <script>
-        // Загрузка файла и сравнение по парам
-        document.getElementById('upload-form').addEventListener('submit', function(event) {
-            event.preventDefault();
+        const uploadForm = document.getElementById('upload-form');
+        const comparisonLayout = document.getElementById('comparison-layout');
+        const comparisonTableBody = document.getElementById('comparisonTableBody');
+        const similarityHeader = document.getElementById('similarityHeader');
 
-            const formData = new FormData();
+        // Upload and compare files
+        uploadForm.addEventListener('submit', async e => {
+            e.preventDefault();
+
+            const formData = new FormData(uploadForm);
             const files = document.getElementById('files').files;
-            const language = document.getElementById('languageSelect').value;
-            formData.append('language', language);
+            for (let file of files) formData.append('files', file);
 
-            for (let i = 0; i < files.length; i++) {
-                formData.append('files', files[i]);
-            }
+            await fetch('/upload_files', { method: 'POST', body: formData });
+            const res = await fetch('/compare_all');
+            const data = await res.json();
 
-            fetch('/upload_files', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(() => {
-                fetch('/compare_all')
-                    .then(res => res.json())
-                    .then(data => {
-                        const tbody = document.getElementById('comparisonTableBody');
-                        tbody.innerHTML = '';
+            comparisonTableBody.innerHTML = '';
+            data.comparisons.forEach(({ file1, file2, similarity }) => {
+                const row = document.createElement('tr');
+                const color =
+                    similarity > 70 ? '#f8d7da' :
+                    similarity > 40 ? '#fff3cd' :
+                    '#d4edda';
+                row.style.backgroundColor = color;
 
-                        data.comparisons.forEach(entry => {
-                            const row = document.createElement('tr');
-                            const color =
-                                entry.similarity > 70 ? '#f8d7da' :
-                                entry.similarity > 40 ? '#fff3cd' :
-                                '#d4edda';
-                            row.style.backgroundColor = color;
-
-                            row.innerHTML = `
-                                <td>${entry.file1}</td>
-                                <td>${entry.file2}</td>
-                                <td>${entry.similarity}%</td>
-                                <td>
-                                    <button class="compareRowBtn" data-file1="${entry.file1}" data-file2="${entry.file2}" style="
-                                        background-color:#3498db;
-                                        color:white;
-                                        border:none;
-                                        border-radius:5px;
-                                        padding:5px 10px;
-                                        cursor:pointer;
-                                    ">Compare</button>
-                                </td>
-                            `;
-                            tbody.appendChild(row);
-                        });
-
-                        document.getElementById('comparison-layout').style.display = 'flex';
-                    });
+                row.innerHTML = `
+                    <td>${file1}</td>
+                    <td>${file2}</td>
+                    <td>${similarity}%</td>
+                    <td><button class="compare-btn" data-file1="${file1}" data-file2="${file2}">Compare</button></td>
+                `;
+                comparisonTableBody.appendChild(row);
             });
+
+            comparisonLayout.style.display = 'flex';
         });
 
-        // Сортировка в таблице по проценту заимствований
+        // Sort by similarity
         let ascending = true;
-        document.getElementById('similarityHeader').addEventListener('click', () => {
-            const tbody = document.getElementById('comparisonTableBody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
+        similarityHeader.addEventListener('click', () => {
+            const rows = Array.from(comparisonTableBody.querySelectorAll('tr'));
             rows.sort((a, b) => {
                 const valA = parseFloat(a.cells[2].innerText);
                 const valB = parseFloat(b.cells[2].innerText);
                 return ascending ? valA - valB : valB - valA;
             });
             ascending = !ascending;
-            tbody.innerHTML = '';
-            rows.forEach(row => tbody.appendChild(row));
+            comparisonTableBody.innerHTML = '';
+            rows.forEach(r => comparisonTableBody.appendChild(r));
         });
 
-        // Логика кнопки Compare
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('compareRowBtn')) {
-                const file1 = e.target.dataset.file1;
-                const file2 = e.target.dataset.file2;
-                const language = document.getElementById('languageSelect').value;
+        // Compare button click handler
+        document.addEventListener('click', async e => {
+            if (!e.target.classList.contains('compare-btn')) return;
+            const { file1, file2 } = e.target.dataset;
+            const language = document.getElementById('languageSelect').value;
 
-                fetch(`/compare_files?file1=${encodeURIComponent(file1)}&file2=${encodeURIComponent(file2)}&language=${encodeURIComponent(language)}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.error) {
-                            alert(data.error);
-                            return;
-                        }
+            const res = await fetch(`/compare_files?file1=${encodeURIComponent(file1)}&file2=${encodeURIComponent(file2)}&language=${encodeURIComponent(language)}`);
+            const data = await res.json();
+            if (data.error) return alert(data.error);
 
-                        const percentElem = document.getElementById('plagiarism-percentage');
-                        const percent = data.plagiarism_percentage;
-                        let color = '#2ecc71';
-                        if (percent > 70) color = '#e74c3c';
-                        else if (percent > 40) color = '#f1c40f';
-                        percentElem.style.color = color;
-                        percentElem.innerText = `Plagiarism Percentage: ${percent.toFixed(2)}%`;
+            const percentElem = document.getElementById('plagiarism-percentage');
+            const percent = data.plagiarism_percentage;
+            let color = varColor(percent);
+            percentElem.style.color = color;
+            percentElem.innerText = `Plagiarism Percentage: ${percent.toFixed(2)}%`;
 
-                        // Update right-side comparison panels
-                        document.getElementById('file1-code').innerHTML = data.file1_contents;
-                        document.getElementById('file2-code').innerHTML = data.file2_contents;
-
-                        // Ensure layout is visible
-                        document.getElementById('comparison-layout').style.display = 'flex';
-                    });
-            }
+            document.getElementById('file1-code').innerHTML = data.file1_contents;
+            document.getElementById('file2-code').innerHTML = data.file2_contents;
+            comparisonLayout.style.display = 'flex';
         });
 
-        document.addEventListener('mouseover', function(e) {
+        // Color logic for percentage
+        function varColor(percent) {
+            if (percent > 70) return 'var(--danger-color)';
+            if (percent > 40) return 'var(--warning-color)';
+            return 'var(--success-color)';
+        }
+
+        document.addEventListener('mouseover', e => {
             const target = e.target.closest('.highlight');
-            if (target && target.dataset.match) {
-                const matchId = target.dataset.match;
-                document
-                    .querySelectorAll(`.highlight[data-match="${matchId}"]`)
-                    .forEach(el => el.classList.add('hover-linked'));
-            }
-            const otherSide = target.dataset.side === 'file1' ? 'file2' : 'file1';
-            const otherEl = document.querySelector(`.highlight[data-match="${matchId}"][data-side="${otherSide}"]`);
-            if (otherEl) {
-                otherEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            if (!target || !target.dataset.match) return;
+
+            const matchId = target.dataset.match;
+            document
+                .querySelectorAll(`.highlight[data-match="${matchId}"]`)
+                .forEach(el => el.classList.add('hover-linked'));
         });
 
-        document.addEventListener('mouseout', function(e) {
+        document.addEventListener('mouseout', e => {
             const target = e.target.closest('.highlight');
-            if (target && target.dataset.match) {
-                const matchId = target.dataset.match;
-                document
-                    .querySelectorAll(`.highlight[data-match="${matchId}"]`)
-                    .forEach(el => el.classList.remove('hover-linked'));
-            }
+            if (!target || !target.dataset.match) return;
+
+            const matchId = target.dataset.match;
+            document
+                .querySelectorAll(`.highlight[data-match="${matchId}"]`)
+                .forEach(el => el.classList.remove('hover-linked'));
         });
+
+
     </script>
 </body>
 </html>

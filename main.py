@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify
-import difflib
 import plagiarism
+import colorsys
 
 app = Flask(__name__)
 
@@ -71,9 +71,6 @@ def compare_all():
 
 @app.route('/compare_files')
 def compare_files():
-    import colorsys
-    import random
-    import hashlib
 
     file1_name = request.args.get('file1')
     file2_name = request.args.get('file2')
@@ -145,13 +142,11 @@ def compare_files():
     html1 = render_lines(file1_lines, line_meta_1, "file1")
     html2 = render_lines(file2_lines, line_meta_2, "file2")
 
-
     return jsonify({
         "plagiarism_percentage": similarity * 100,
         "file1_contents": html1,
         "file2_contents": html2
     })
-
 
 if __name__ == '__main__':
     app.run(debug=True)
